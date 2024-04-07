@@ -1,13 +1,14 @@
-(defproject ring/ring-anti-forgery "1.3.0"
+(defproject com.janetacarr/ring-anti-forgery "1.3.0"
   :description "Ring middleware to prevent CSRF attacks"
   :url "https://github.com/ring-clojure/ring-anti-forgery"
   :license {:name "The MIT License"
             :url "http://opensource.org/licenses/MIT"}
-  :dependencies [[org.clojure/clojure "1.7.0"]
+  :dependencies [[org.clojure/clojure "1.11.1"]
                  [crypto-random "1.2.1"]
                  [crypto-equality "1.0.1"]
                  [hiccup "1.0.5"]]
-  :plugins [[lein-codox "0.10.8"]]
+  :plugins [[lein-codox "0.10.8"]
+            [cider/cider-nrepl "0.29.0"]]
   :codox
   {:output-path "codox"
    :project     {:name "Ring Anti-Forgery"}

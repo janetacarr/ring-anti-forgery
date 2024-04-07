@@ -83,24 +83,29 @@
    (wrap-anti-forgery handler {}))
   ([handler options]
    {:pre [(not (and (:error-response options) (:error-handler options)))]}
-   (let [read-token    (:read-token options default-request-token)
+   (let [exempt-routes (seq (:exempt-routes options))
+         read-token    (:read-token options default-request-token)
          strategy      (:strategy options (session/session-strategy))
          error-handler (make-error-handler options)]
      (fn
        ([request]
-        (if (valid-request? strategy request read-token)
-          (let [token (strategy/get-token strategy request)]
-            (binding [*anti-forgery-token* token]
-              (when-let [response (handler (assoc request :anti-forgery-token token))]
-                (strategy/write-token strategy request response token))))
-          (error-handler request)))
+        (if (and exempt-routes (some #(= (:uri request) %) exempt-routes))
+          (handler request)
+          (if (valid-request? strategy request read-token)
+            (let [token (strategy/get-token strategy request)]
+              (binding [*anti-forgery-token* token]
+                (when-let [response (handler (assoc request :anti-forgery-token token))]
+                  (strategy/write-token strategy request response token))))
+            (error-handler request))))
        ([request respond raise]
-        (if (valid-request? strategy request read-token)
-          (let [token (strategy/get-token strategy request)]
-            (binding [*anti-forgery-token* token]
-              (handler (assoc request :anti-forgery-token token)
-                       #(respond
-                         (when %
-                           (strategy/write-token strategy request % token)))
-                       raise)))
-          (error-handler request respond raise)))))))
+        (if (and exempt-routes (some #(= (:uri request) %) exempt-routes))
+          (handler request respond raise)
+          (if (valid-request? strategy request read-token)
+            (let [token (strategy/get-token strategy request)]
+              (binding [*anti-forgery-token* token]
+                (handler (assoc request :anti-forgery-token token)
+                         #(respond
+                           (when %
+                             (strategy/write-token strategy request % token)))
+                         raise)))
+            (error-handler request respond raise))))))))
